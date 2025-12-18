@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+
+<title>Let’s Match b/e/l/l/e!</title>
+
+<!-- ✅ OGP 最適化（LINE 対応） -->
+<meta property="og:title" content="Let’s Match b/e/l/l/e!">
+<meta property="og:description" content="スロット風ゲームを遊んでみよう！">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mstkwtnb.github.io/testgamesltmcn/">
+<meta property="og:image" content="https://mstkwtnb.github.io/testgamesltmcn/ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<meta name="robots" content="noindex, nofollow">
+
+<style>
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    padding: 40px;
+    background: #000; /* ✅ 背景を黒に */
+    font-size: 24px; /* 1.5倍 */
+  }
+
+  h1 {
+    margin-bottom: 20px;
+    font-size: 48px; /* 1.5倍 */
+    color: magenta;
+  }
+
+  .reels {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 30px;
+  }
+
+  .reel {
+    width: 150px;   /* 1.5倍 */
+    height: 150px;  /* 1.5倍 */
+    overflow: hidden;
+    border: 5px solid #333;
+    border-radius: 12px;
+    background-image: url("slt265x1325.png");
+    background-repeat: repeat-y;
+    background-size: 150px 750px; /* 1.5倍 */
+    background-position-y: 0;
+  }
+
+  .stop-btn {
+    font-size: 45px; /* 1.5倍 */
+    cursor: pointer;
+    display: none;
+    margin-top: 10px;
+    color: magenta;
+  }
+
+  #excellent {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 120px; /* 1.5倍 */
+    font-weight: bold;
+    color: rgba(255,0,255,0.9);
+    display: none;
+  }
+
+  #resultText {
+    font-size: 48px; /* 1.5倍 */
+    margin-top: 20px;
+    min-height: 60px;
+    color: magenta;
+  }
+
+  #startBtn {
+    padding: 15px 30px;
+    font-size: 30px; /* 1.5倍 */
+    margin: 20px;
+    color: magenta;
+    border: 3px solid magenta;
+    background: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>Let’s Match b/e/l/l/e!</h1>
+
+<div class="reels" id="reels"></div>
+
+<div id="excellent">EXCELLENT!!</div>
+<div id="resultText"></div>
+
+<button id="startBtn">START</button>
+
+<script>
+const REELS = 5;
+const oneHeight = 150;
+const totalHeight = 750;
+const baseMaxSpeed = 12;
+let fixedMaxSpeed = baseMaxSpeed;
+const accelDuration = 2000;
+
+let reels = [];
+let speeds = Array(REELS).fill(0);
+let positions = Array(REELS).fill(0);
+let spinning = Array(REELS).fill(false);
+let stopped = Array(REELS).fill(false);
+
+const reelsContainer = document.getElementById("reels");
+const startBtn = document.getElementById("startBtn");
+const excellent = document.getElementById("excellent");
+const resultText = document.getElementById("resultText");
+
+const symbols = ["b", "e", "l", "l", "e"];
+
+// リール生成
+for (let i = 0; i < REELS; i++) {
+  const reelDiv = document.createElement("div");
+  reelDiv.className = "reel";
+
+  const stopBtn = document.createElement("div");
+  stopBtn.className = "stop-btn";
+  stopBtn.textContent = "●";
+
+  stopBtn.onclick = () => stopReel(i);
+  stopBtn.ontouchstart = (e) => { e.preventDefault(); stopReel(i); };
+
+  const wrapper = document.createElement("div");
+  wrapper.style.textAlign = "center";
+  wrapper.appendChild(reelDiv);
+  wrapper.appendChild(stopBtn);
+
+  reelsContainer.appendChild(wrapper);
+  reels.push({ reelDiv, stopBtn });
+}
+
+// expo-out
+function easeOutExpo(t) {
+  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+}
+
+// START
+function startGame() {
+
+  // ✅ START を押した瞬間に強制完全停止
+  for (let i = 0; i < REELS; i++) {
+    spinning[i] = false;
+    stopped[i] = true;
+    speeds[i] = 0;
+
+    const snap = Math.round(positions[i] / oneHeight) * oneHeight;
+    positions[i] = snap % totalHeight;
+    reels[i].reelDiv.style.backgroundPositionY = -positions[i] + "px";
+  }
+
+  // ✅ START ボタンを隠す（全停止まで表示しない）
+  startBtn.style.display = "none";
+
+  excellent.style.display = "none";
+  resultText.textContent = "";
+
+  fixedMaxSpeed = baseMaxSpeed;
+
+  speeds.fill(0);
+  spinning.fill(true);
+  stopped.fill(false);
+
+  reels.forEach(r => r.stopBtn.style.display = "none");
+
+  reels.forEach((_, i) => {
+    setTimeout(() => accelerate(i), i * 100);
+  });
+}
+
+startBtn.onclick = startGame;
+startBtn.ontouchstart = (e) => { e.preventDefault(); startGame(); };
+
+// 加速
+function accelerate(index) {
+  const startTime = performance.now();
+
+  function step(now) {
+    if (!spinning[index]) return;
+
+    const t = Math.min((now - startTime) / accelDuration, 1);
+    speeds[index] = fixedMaxSpeed * easeOutExpo(t);
+
+    positions[index] = (positions[index] + speeds[index]) % totalHeight;
+    reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
+
+    if (t < 1) {
+      requestAnimationFrame(step);
+    } else {
+      speeds[index] = fixedMaxSpeed;
+      if (index === 0) reels[index].stopBtn.style.display = "block";
+      requestAnimationFrame(() => spinLoop(index));
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
+// 等速回転
+function spinLoop(index) {
+  if (!spinning[index] || stopped[index]) return;
+
+  positions[index] = (positions[index] + speeds[index]) % totalHeight;
+  reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
+
+  requestAnimationFrame(() => spinLoop(index));
+}
+
+// STOP
+function stopReel(index) {
+  if (stopped[index]) return;
+
+  stopped[index] = true;
+  spinning[index] = false;
+  reels[index].stopBtn.style.display = "none";
+
+  // ✅ 0.03秒ぶん進める
+  positions[index] = (positions[index] + speeds[index] * 1.8) % totalHeight;
+
+  const snapped = Math.round(positions[index] / oneHeight) * oneHeight;
+  positions[index] = snapped % totalHeight;
+
+  let shake = 15;
+  function shakeAnim() {
+    reels[index].reelDiv.style.backgroundPositionY = -(positions[index] + shake) + "px";
+    shake *= -0.4;
+    if (Math.abs(shake) > 1) {
+      requestAnimationFrame(shakeAnim);
+    } else {
+      reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
+      checkAllStopped();
+    }
+  }
+  shakeAnim();
+
+  if (index + 1 < REELS) {
+    reels[index + 1].stopBtn.style.display = "block";
+  }
+}
+
+// 全停止チェック
+function checkAllStopped() {
+  if (!stopped.every(v => v)) return;
+
+  const result = positions.map(p => symbols[Math.floor(p / oneHeight)]);
+
+  if (result.join("") === "belle") {
+    excellent.style.display = "block";
+    resultText.textContent = "大当たり！";
+  } else {
+    resultText.textContent = "残念.....";
+  }
+
+  // ✅ 全停止したら START ボタンを再表示
+  startBtn.style.display = "inline-block";
+}
+</script>
+
+</body>
+</html>
