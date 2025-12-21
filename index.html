@@ -234,7 +234,7 @@ function stopReel(index) {
   reels[index].stopBtn.style.display = "none";
 
   /* ▼ 停止時の慣性も逆方向に */
-  positions[index] = (positions[index] - speeds[index] * 1.8 + totalHeight) % totalHeight;
+  positions[index] = (positions[index] - speeds[index] * 1.2 + totalHeight) % totalHeight;
 
   const snapped = Math.round(positions[index] / oneHeight) * oneHeight;
   positions[index] = snapped % totalHeight;
