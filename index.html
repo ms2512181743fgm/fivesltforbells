@@ -131,6 +131,15 @@ const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
 const resultText = document.getElementById("resultText");
 
+const messages = {
+  "belle": { text: "大当たり",excellent: true },
+  "beeee": [ text: "べーーー",excellent: false },
+  "leeee": [ text: "りーーー",excellent: false },
+  "bbbbb": [ text: "bを揃えた、しかし何も起こらなかった...",excellent: false },
+  "eeeee": [ text: "eを揃えた、しかし何も起こらなかった...",excellent: false },
+  "lllll": [ text: "lを揃えた、しかし何も起こらなかった...",excellent: false },
+  "elleb": [ text: "右からやって来たね！",excellent: true }
+}
 const symbols = ["e", "l", "l", "e", "b"];
 
 for (let i = 0; i < REELS; i++) {
@@ -261,12 +270,15 @@ function checkAllStopped() {
   if (!stopped.every(v => v)) return;
 
   const result = positions.map(p => symbols[Math.floor(p / oneHeight)]);
+  const joined = result.join("");
 
-  if (result.join("") === "belle") {
-    excellent.style.display = "block";
-    resultText.textContent = "大当たり！";
+  if (messages[joined]) {
+    const msg = messages[joined];
+    resultText.textContent = msg.text;
+    excellent.style.display = msg.excellent ? "block" : "none";
   } else {
     resultText.textContent = "残念.....";
+    excellent.style.display = "none";
   }
 
   startBtn.style.display = "inline-block";
