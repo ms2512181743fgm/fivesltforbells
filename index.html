@@ -116,11 +116,11 @@ let reels = [];
 let speeds = Array(REELS).fill(0);
 
 let positions = [
-  0,
-  140,
-  280,
+  560,
   420,
-  560
+  280,
+  140,
+  0
 ];
 
 let spinning = Array(REELS).fill(false);
@@ -131,7 +131,7 @@ const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
 const resultText = document.getElementById("resultText");
 
-const symbols = ["b", "e", "l", "l", "e"];
+const symbols = ["e", "l", "l", "e", "b"];
 
 for (let i = 0; i < REELS; i++) {
   const reelDiv = document.createElement("div");
