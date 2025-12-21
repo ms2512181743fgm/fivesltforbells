@@ -115,6 +115,7 @@ const accelDuration = 2000;
 let reels = [];
 let speeds = Array(REELS).fill(0);
 
+// 画像の下→上の順に合わせて belle が並ぶように初期位置を調整
 let positions = [
   560,
   420,
@@ -131,15 +132,22 @@ const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
 const resultText = document.getElementById("resultText");
 
+/**
+ * 揃いパターンごとのメッセージ定義
+ * text: 表示する文字
+ * excellent: true なら EXCELLENT!! を表示
+ */
 const messages = {
-  "belle": { text: "大当たり",excellent: true },
-  "beeee": [ text: "べーーー",excellent: false },
-  "leeee": [ text: "りーーー",excellent: false },
-  "bbbbb": [ text: "bを揃えた、しかし何も起こらなかった...",excellent: false },
-  "eeeee": [ text: "eを揃えた、しかし何も起こらなかった...",excellent: false },
-  "lllll": [ text: "lを揃えた、しかし何も起こらなかった...",excellent: false },
-  "elleb": [ text: "右からやって来たね！",excellent: true }
-}
+  "belle": { text: "大当たり！", excellent: true },
+  "beeee": { text: "べーーー", excellent: false },
+  "leeee": { text: "りーーー", excellent: false },
+  "bbbbb": { text: "bを揃えた、しかし何も起こらなかった...", excellent: false },
+  "eeeee": { text: "eを揃えた、しかし何も起こらなかった...", excellent: false },
+  "lllll": { text: "lを揃えた、しかし何も起こらなかった...", excellent: false },
+  "elleb": { text: "右からやって来たね！", excellent: true }
+};
+
+// 背景画像の下→上の順番に対応するシンボル
 const symbols = ["e", "l", "l", "e", "b"];
 
 for (let i = 0; i < REELS; i++) {
@@ -207,7 +215,7 @@ function accelerate(index) {
     const t = Math.min((now - startTime) / accelDuration, 1);
     speeds[index] = fixedMaxSpeed * easeOutExpo(t);
 
-    /* ▼ 回転方向を逆にする（マイナス方向へ） */
+    // 回転方向を逆にする（マイナス方向へ）
     positions[index] = (positions[index] - speeds[index] + totalHeight) % totalHeight;
 
     reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
@@ -227,7 +235,7 @@ function accelerate(index) {
 function spinLoop(index) {
   if (!spinning[index] || stopped[index]) return;
 
-  /* ▼ 回転方向を逆にする */
+  // 回転方向を逆にする
   positions[index] = (positions[index] - speeds[index] + totalHeight) % totalHeight;
 
   reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
@@ -242,7 +250,7 @@ function stopReel(index) {
   spinning[index] = false;
   reels[index].stopBtn.style.display = "none";
 
-  /* ▼ 停止時の慣性も逆方向に */
+  // 停止時の慣性も逆方向に（1.2 は好みに応じて調整）
   positions[index] = (positions[index] - speeds[index] * 1.2 + totalHeight) % totalHeight;
 
   const snapped = Math.round(positions[index] / oneHeight) * oneHeight;
