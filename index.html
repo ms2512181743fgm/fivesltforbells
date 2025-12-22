@@ -36,7 +36,7 @@
     display: flex;
     justify-content: center;
     gap: 20px;
-    height: 210px; /* ← ここが基準 */
+    height: 210px;
     margin-bottom: 10px;
   }
 
@@ -54,7 +54,7 @@
   /* ▼ 窓枠画像（5列まとめて） */
   .slot-frame {
     position: absolute;
-    top: 50%;   /* reels の高さに対して中央 */
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
@@ -62,7 +62,7 @@
 
   /* ▼ ボタン画像 */
   .stop-btn {
-    width: 57px; /* φ1.5cm ≒ 56.7px */
+    width: 57px;
     height: 57px;
     margin-top: 5px;
     user-select: none;
@@ -82,8 +82,6 @@
     height: 210px;
     border-radius: 12px;
     pointer-events: none;
-    background: rgba(255,255,255,0.7);
-    box-shadow: 0 0 25px 15px rgba(255,255,255,0.9);
     opacity: 0;
     animation: glowFlash 0.45s ease-out forwards;
   }
@@ -103,8 +101,6 @@
     height: 210px;
     border-radius: 12px;
     pointer-events: none;
-    background: rgba(255,255,255,0.4);
-    box-shadow: 0 0 25px 15px rgba(255,255,255,0.7);
     animation: glowLoop 1.2s ease-in-out infinite;
   }
 
@@ -165,17 +161,14 @@ const frameHeight = 210;
 const centerOffset = (frameHeight - oneHeight) / 2;
 
 const baseMaxSpeed = 14.4;
-let fixedMaxSpeed = baseMaxSpeed;
 const accelDuration = 2000;
 
-/* 状態管理 */
 let reels = [];
 let speeds = Array(REELS).fill(0);
-let positions = [560, 420, 280, 140, 0]; // 初期 belle
+let positions = [560, 420, 280, 140, 0];
 let spinning = Array(REELS).fill(false);
 let stopped = Array(REELS).fill(false);
 
-/* DOM */
 const reelsContainer = document.getElementById("reels");
 const slotWrapper = document.getElementById("slotWrapper");
 const slotFrame = document.getElementById("slotFrame");
@@ -183,7 +176,6 @@ const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
 const resultText = document.getElementById("resultText");
 
-/* メッセージ辞書 */
 const messages = {
   "belle": { text: "大当たり！", excellent: true },
   "beeee": { text: "べーーー", excellent: false },
@@ -194,10 +186,21 @@ const messages = {
   "elleb": { text: "右からやって来たね！", excellent: true }
 };
 
-/* PNG画像の下→上の順番 */
 const symbols = ["e", "l", "l", "e", "b"];
 
-/* 背景位置を中央揃えで更新 */
+/* ▼ ランダムグラデーション生成 */
+function randomGradient() {
+  const angle = Math.floor(Math.random() * 360);
+  const stop1 = Math.floor(Math.random() * 40) + 10;  // 10〜50%
+  const stop2 = stop1 + Math.floor(Math.random() * 40) + 20; // stop1+20〜stop1+60
+
+  return `linear-gradient(${angle}deg,
+    magenta ${stop1}%,
+    gold ${stop2}%
+  )`;
+}
+
+/* ▼ 背景位置を中央揃えで更新 */
 function updateReelPosition(i) {
   reels[i].reelDiv.style.backgroundPositionY =
     (-positions[i] + centerOffset) + "px";
@@ -224,6 +227,7 @@ function flashIfCorrect(index) {
   if (symbol === correct) {
     const glow = document.createElement("div");
     glow.className = "glow";
+    glow.style.background = randomGradient();
     reels[index].reelDiv.parentElement.appendChild(glow);
     setTimeout(() => glow.remove(), 500);
   }
@@ -325,7 +329,7 @@ function spinLoop(index) {
   requestAnimationFrame(() => spinLoop(index));
 }
 
-/* ▼ 停止 */
+/* ▼ 停止（ラグなし） */
 function stopReel(index) {
   if (stopped[index]) return;
 
@@ -336,10 +340,13 @@ function stopReel(index) {
   positions[index] = (positions[index] - speeds[index] * 1.2 + totalHeight) % totalHeight;
   positions[index] = Math.round(positions[index] / oneHeight) * oneHeight % totalHeight;
 
+  updateReelPosition(index);
+
   let shake = 15;
   function shakeAnim() {
     reels[index].reelDiv.style.backgroundPositionY =
       (-positions[index] + centerOffset + shake) + "px";
+
     shake *= -0.4;
 
     if (Math.abs(shake) > 1) {
@@ -366,11 +373,11 @@ function checkAllStopped() {
     resultText.textContent = messages[joined].text;
     excellent.style.display = messages[joined].excellent ? "block" : "none";
 
-    /* ▼ 全揃いループ光 */
     if (joined === "belle") {
       for (let i = 0; i < REELS; i++) {
         const loop = document.createElement("div");
         loop.className = "glow-loop";
+        loop.style.background = randomGradient();
         reels[i].reelDiv.parentElement.appendChild(loop);
       }
     }
