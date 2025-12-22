@@ -4,30 +4,21 @@
 <meta charset="UTF-8">
 <title>Let’s Match b/e/l/l/e!</title>
 
-<meta property="og:title" content="Let’s Match b/e/l/l/e!">
-<meta property="og:description" content="スロット風ゲームを遊んでみよう！">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://ms2512181743fgm.github.io/testgamesltmcn/">
-<meta property="og:image" content="https://ms2512181743fgm.github.io/testgamesltmcn/ogp.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="robots" content="noindex, nofollow">
-
 <style>
   body {
     font-family: sans-serif;
     text-align: center;
     background: #000;
     font-size: 24px;
-    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
     margin: 0;
+    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
   }
 
   h1 {
-    margin: 10px 0 10px;
+    margin: 10px 0;
     font-size: 40px;
     color: magenta;
   }
@@ -45,8 +36,8 @@
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin: 10px 0 20px;
-    height: 210px; /* ← ここが基準になる */
+    height: 210px; /* ← ここが基準 */
+    margin-bottom: 10px;
   }
 
   .reel {
@@ -55,11 +46,9 @@
     overflow: hidden;
     border: 4px solid #333;
     border-radius: 12px;
-
     background-image: url("slt265x1325.png");
     background-repeat: repeat-y;
     background-size: 140px 700px;
-    background-position-y: 0;
   }
 
   /* ▼ 窓枠画像（5列まとめて） */
@@ -69,10 +58,22 @@
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
-    height: auto;
   }
 
-  /* ▼ 光エフェクト */
+  /* ▼ ボタン画像 */
+  .stop-btn {
+    width: 57px; /* φ1.5cm ≒ 56.7px */
+    height: 57px;
+    margin-top: 5px;
+    user-select: none;
+  }
+
+  .stop-btn.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  /* ▼ 光エフェクト（単発） */
   .glow {
     position: absolute;
     top: 0;
@@ -93,42 +94,51 @@
     100% { opacity: 0; }
   }
 
-  .stop-btn {
-    font-size: 40px;
-    cursor: pointer;
-    display: none;
-    margin-top: 5px;
-    color: magenta;
+  /* ▼ 全揃いループ光 */
+  .glow-loop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 140px;
+    height: 210px;
+    border-radius: 12px;
+    pointer-events: none;
+    background: rgba(255,255,255,0.4);
+    box-shadow: 0 0 25px 15px rgba(255,255,255,0.7);
+    animation: glowLoop 1.2s ease-in-out infinite;
+  }
+
+  @keyframes glowLoop {
+    0%   { opacity: 0.2; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.2; }
   }
 
   #excellent {
+    font-size: 120px;
+    color: rgba(255,0,255,0.9);
+    display: none;
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 120px;
-    font-weight: bold;
-    color: rgba(255,0,255,0.9);
-    display: none;
-    pointer-events: none;
   }
 
   #resultText {
     font-size: 40px;
-    margin-top: 10px;
-    min-height: 50px;
     color: magenta;
+    min-height: 50px;
   }
 
   #startBtn {
     padding: 10px 25px;
     font-size: 26px;
-    margin: 10px auto;
     color: magenta;
     border: 3px solid magenta;
     background: #fff;
     border-radius: 10px;
     cursor: pointer;
+    margin: 10px auto;
   }
 </style>
 </head>
@@ -136,14 +146,9 @@
 
 <h1>Let’s Match b/e/l/l/e!</h1>
 
-<!-- ▼ リール5列＋窓枠まとめ -->
 <div class="slot-wrapper" id="slotWrapper">
-
   <div class="reels" id="reels"></div>
-
-  <!-- ▼ 窓枠画像（サイズは JS で自動調整） -->
   <img class="slot-frame" id="slotFrame" src="slt_waku_1560x450.png">
-
 </div>
 
 <div id="excellent">EXCELLENT!!</div>
@@ -166,7 +171,6 @@ const accelDuration = 2000;
 /* 状態管理 */
 let reels = [];
 let speeds = Array(REELS).fill(0);
-
 let positions = [560, 420, 280, 140, 0]; // 初期 belle
 let spinning = Array(REELS).fill(false);
 let stopped = Array(REELS).fill(false);
@@ -199,7 +203,20 @@ function updateReelPosition(i) {
     (-positions[i] + centerOffset) + "px";
 }
 
-/* ▼ 光演出（正解文字なら光る） */
+/* ▼ ボタン状態切り替え */
+function enableButton(i) {
+  const btn = reels[i].stopBtn;
+  btn.classList.remove("disabled");
+  btn.src = "btn_enabled.png";
+}
+
+function disableButton(i) {
+  const btn = reels[i].stopBtn;
+  btn.classList.add("disabled");
+  btn.src = "btn_unenabled.png";
+}
+
+/* ▼ 光演出（単発） */
 function flashIfCorrect(index) {
   const symbol = symbols[Math.floor(positions[index] / oneHeight)];
   const correct = ["b","e","l","l","e"][index];
@@ -207,25 +224,23 @@ function flashIfCorrect(index) {
   if (symbol === correct) {
     const glow = document.createElement("div");
     glow.className = "glow";
-
-    // wrapper に重ねる
     reels[index].reelDiv.parentElement.appendChild(glow);
-
     setTimeout(() => glow.remove(), 500);
   }
 }
 
-/* リール生成 */
+/* ▼ リール生成 */
 for (let i = 0; i < REELS; i++) {
   const reelDiv = document.createElement("div");
   reelDiv.className = "reel";
 
-  const stopBtn = document.createElement("div");
-  stopBtn.className = "stop-btn";
-  stopBtn.textContent = "●";
+  const stopBtn = document.createElement("img");
+  stopBtn.className = "stop-btn disabled";
+  stopBtn.src = "btn_unenabled.png";
 
-  stopBtn.onclick = () => stopReel(i);
-  stopBtn.ontouchstart = (e) => { e.preventDefault(); stopReel(i); };
+  stopBtn.onclick = () => {
+    if (!stopBtn.classList.contains("disabled")) stopReel(i);
+  };
 
   const wrapper = document.createElement("div");
   wrapper.style.textAlign = "center";
@@ -238,17 +253,19 @@ for (let i = 0; i < REELS; i++) {
   updateReelPosition(i);
 }
 
-/* 窓枠画像をスロット全体の幅に合わせる */
+/* ▼ 窓枠画像をスロット全体の幅に合わせる */
 function resizeFrame() {
-  const width = slotWrapper.offsetWidth;
-  slotFrame.style.width = width + "px";
+  slotFrame.style.width = slotWrapper.offsetWidth + "px";
 }
 resizeFrame();
 window.addEventListener("resize", resizeFrame);
 
-/* START */
+/* ▼ START */
 function startGame() {
+  document.querySelectorAll(".glow-loop").forEach(e => e.remove());
+
   for (let i = 0; i < REELS; i++) {
+    disableButton(i);
     spinning[i] = false;
     stopped[i] = true;
     speeds[i] = 0;
@@ -262,13 +279,9 @@ function startGame() {
   excellent.style.display = "none";
   resultText.textContent = "";
 
-  fixedMaxSpeed = baseMaxSpeed;
-
   speeds.fill(0);
   spinning.fill(true);
   stopped.fill(false);
-
-  reels.forEach(r => r.stopBtn.style.display = "none");
 
   reels.forEach((_, i) => {
     setTimeout(() => accelerate(i), i * 100);
@@ -276,9 +289,8 @@ function startGame() {
 }
 
 startBtn.onclick = startGame;
-startBtn.ontouchstart = (e) => { e.preventDefault(); startGame(); };
 
-/* 加速 */
+/* ▼ 加速 */
 function accelerate(index) {
   const startTime = performance.now();
 
@@ -286,17 +298,16 @@ function accelerate(index) {
     if (!spinning[index]) return;
 
     const t = Math.min((now - startTime) / accelDuration, 1);
-    speeds[index] = fixedMaxSpeed * easeOutExpo(t);
+    speeds[index] = baseMaxSpeed * (1 - Math.pow(2, -10 * t));
 
     positions[index] = (positions[index] - speeds[index] + totalHeight) % totalHeight;
-
     updateReelPosition(index);
 
     if (t < 1) {
       requestAnimationFrame(step);
     } else {
-      speeds[index] = fixedMaxSpeed;
-      if (index === 0) reels[index].stopBtn.style.display = "block";
+      speeds[index] = baseMaxSpeed;
+      if (index === 0) enableButton(0);
       requestAnimationFrame(() => spinLoop(index));
     }
   }
@@ -304,51 +315,47 @@ function accelerate(index) {
   requestAnimationFrame(step);
 }
 
-/* 回転ループ */
+/* ▼ 回転ループ */
 function spinLoop(index) {
   if (!spinning[index] || stopped[index]) return;
 
   positions[index] = (positions[index] - speeds[index] + totalHeight) % totalHeight;
-
   updateReelPosition(index);
 
   requestAnimationFrame(() => spinLoop(index));
 }
 
-/* 停止 */
+/* ▼ 停止 */
 function stopReel(index) {
   if (stopped[index]) return;
 
   stopped[index] = true;
   spinning[index] = false;
-  reels[index].stopBtn.style.display = "none";
+  disableButton(index);
 
   positions[index] = (positions[index] - speeds[index] * 1.2 + totalHeight) % totalHeight;
-
-  const snapped = Math.round(positions[index] / oneHeight) * oneHeight;
-  positions[index] = snapped % totalHeight;
+  positions[index] = Math.round(positions[index] / oneHeight) * oneHeight % totalHeight;
 
   let shake = 15;
   function shakeAnim() {
     reels[index].reelDiv.style.backgroundPositionY =
       (-positions[index] + centerOffset + shake) + "px";
     shake *= -0.4;
+
     if (Math.abs(shake) > 1) {
       requestAnimationFrame(shakeAnim);
     } else {
       updateReelPosition(index);
-      flashIfCorrect(index);  /* ← 光演出 */
+      flashIfCorrect(index);
       checkAllStopped();
     }
   }
   shakeAnim();
 
-  if (index + 1 < REELS) {
-    reels[index + 1].stopBtn.style.display = "block";
-  }
+  if (index + 1 < REELS) enableButton(index + 1);
 }
 
-/* 揃い判定 */
+/* ▼ 揃い判定 */
 function checkAllStopped() {
   if (!stopped.every(v => v)) return;
 
@@ -356,20 +363,23 @@ function checkAllStopped() {
   const joined = result.join("");
 
   if (messages[joined]) {
-    const msg = messages[joined];
-    resultText.textContent = msg.text;
-    excellent.style.display = msg.excellent ? "block" : "none";
+    resultText.textContent = messages[joined].text;
+    excellent.style.display = messages[joined].excellent ? "block" : "none";
+
+    /* ▼ 全揃いループ光 */
+    if (joined === "belle") {
+      for (let i = 0; i < REELS; i++) {
+        const loop = document.createElement("div");
+        loop.className = "glow-loop";
+        reels[i].reelDiv.parentElement.appendChild(loop);
+      }
+    }
   } else {
     resultText.textContent = "残念.....";
     excellent.style.display = "none";
   }
 
   startBtn.style.display = "inline-block";
-}
-
-/* イージング */
-function easeOutExpo(t) {
-  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 </script>
 
