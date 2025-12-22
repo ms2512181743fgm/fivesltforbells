@@ -41,15 +41,14 @@
 
   .reel {
     width: 140px;
-    height: 210px; /* ← 枠だけ1.5倍 */
+    height: 210px; /* 枠だけ1.5倍 */
     overflow: hidden;
     border: 4px solid #333;
     border-radius: 12px;
 
-    /* PNG画像は元の縮尺に戻す */
     background-image: url("slt265x1325.png");
     background-repeat: repeat-y;
-    background-size: 140px 700px; /* ← 元のサイズに戻した */
+    background-size: 140px 700px; /* PNGは元の縮尺 */
     background-position-y: 0;
   }
 
@@ -106,14 +105,13 @@
 <script>
 const REELS = 5;
 
-/* PNG画像の1コマは元のまま 140px */
-const oneHeight = 140;
-const totalHeight = 700;
+const oneHeight = 140;      // PNGの1コマ高さ
+const totalHeight = 700;    // 140 × 5
+const frameHeight = 210;    // 枠の高さ（1.5倍）
+const centerOffset = (frameHeight - oneHeight) / 2; // 35px → 中央揃え補正
 
-/* トップスピード 1.2倍 */
-const baseMaxSpeed = 14.4;
+const baseMaxSpeed = 14.4;  // トップスピード1.2倍
 let fixedMaxSpeed = baseMaxSpeed;
-
 const accelDuration = 2000;
 
 let reels = [];
@@ -150,10 +148,15 @@ const messages = {
 /* PNG画像の下→上の順番 */
 const symbols = ["e", "l", "l", "e", "b"];
 
+/* 背景位置を中央揃えで更新する関数 */
+function updateReelPosition(i) {
+  reels[i].reelDiv.style.backgroundPositionY = -(positions[i] + centerOffset) + "px";
+}
+
 for (let i = 0; i < REELS; i++) {
   const reelDiv = document.createElement("div");
   reelDiv.className = "reel";
-  reelDiv.style.backgroundPositionY = -positions[i] + "px";
+  updateReelPosition(i);
 
   const stopBtn = document.createElement("div");
   stopBtn.className = "stop-btn";
@@ -183,7 +186,7 @@ function startGame() {
 
     const snap = Math.round(positions[i] / oneHeight) * oneHeight;
     positions[i] = snap % totalHeight;
-    reels[i].reelDiv.style.backgroundPositionY = -positions[i] + "px";
+    updateReelPosition(i);
   }
 
   startBtn.style.display = "none";
@@ -217,7 +220,7 @@ function accelerate(index) {
 
     positions[index] = (positions[index] - speeds[index] + totalHeight) % totalHeight;
 
-    reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
+    updateReelPosition(index);
 
     if (t < 1) {
       requestAnimationFrame(step);
@@ -236,7 +239,7 @@ function spinLoop(index) {
 
   positions[index] = (positions[index] - speeds[index] + totalHeight) % totalHeight;
 
-  reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
+  updateReelPosition(index);
 
   requestAnimationFrame(() => spinLoop(index));
 }
@@ -255,12 +258,13 @@ function stopReel(index) {
 
   let shake = 15;
   function shakeAnim() {
-    reels[index].reelDiv.style.backgroundPositionY = -(positions[index] + shake) + "px";
+    reels[index].reelDiv.style.backgroundPositionY =
+      -(positions[index] + centerOffset + shake) + "px";
     shake *= -0.4;
     if (Math.abs(shake) > 1) {
       requestAnimationFrame(shakeAnim);
     } else {
-      reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
+      updateReelPosition(index);
       checkAllStopped();
     }
   }
