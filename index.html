@@ -32,6 +32,13 @@
     color: magenta;
   }
 
+  /* ▼ 5列リール＋窓枠をまとめるラッパー */
+  .slot-wrapper {
+    position: relative;
+    width: 780px; /* 140px × 5列 + 20px × 4隙間 = 780px */
+    margin: 0 auto;
+  }
+
   .reels {
     display: flex;
     justify-content: center;
@@ -50,6 +57,17 @@
     background-repeat: repeat-y;
     background-size: 140px 700px; /* PNGは元の縮尺 */
     background-position-y: 0;
+  }
+
+  /* ▼ 新しい窓枠画像（5列まとめて） */
+  .slot-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* ボタン操作を邪魔しない */
+    width: 780px;  /* リール幅に合わせて縮小 */
+    height: 225px; /* 450px → 半分に縮小 */
   }
 
   .stop-btn {
@@ -95,7 +113,15 @@
 
 <h1>Let’s Match b/e/l/l/e!</h1>
 
-<div class="reels" id="reels"></div>
+<!-- ▼ リール5列＋窓枠まとめ -->
+<div class="slot-wrapper">
+
+  <div class="reels" id="reels"></div>
+
+  <!-- ▼ 追加した窓枠画像 -->
+  <img class="slot-frame" src="slt_waku_1560x450.png">
+
+</div>
 
 <div id="excellent">EXCELLENT!!</div>
 <div id="resultText"></div>
@@ -152,7 +178,6 @@ const symbols = ["e", "l", "l", "e", "b"];
 
 /* 背景位置を中央揃えで更新する関数 */
 function updateReelPosition(i) {
-  // ★ 符号を修正： -positions + centerOffset
   reels[i].reelDiv.style.backgroundPositionY =
     (-positions[i] + centerOffset) + "px";
 }
@@ -269,7 +294,6 @@ function stopReel(index) {
 
   let shake = 15;
   function shakeAnim() {
-    // ★ ここも符号を合わせる
     reels[index].reelDiv.style.backgroundPositionY =
       (-positions[index] + centerOffset + shake) + "px";
     shake *= -0.4;
