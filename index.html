@@ -23,14 +23,12 @@
     color: magenta;
   }
 
-  /* ▼ 5列リール＋窓枠まとめ */
   .slot-wrapper {
     position: relative;
     width: fit-content;
     margin: 0 auto;
   }
 
-  /* ▼ リール部分 */
   .reels {
     position: relative;
     display: flex;
@@ -51,7 +49,6 @@
     background-size: 140px 700px;
   }
 
-  /* ▼ 窓枠画像（さらに1ポイント上へ） */
   .slot-frame {
     position: absolute;
     top: 50%;
@@ -60,7 +57,6 @@
     pointer-events: none;
   }
 
-  /* ▼ ボタン画像 */
   .stop-btn {
     width: 57px;
     height: 57px;
@@ -73,7 +69,6 @@
     opacity: 0.5;
   }
 
-  /* ▼ 揃った瞬間の白フラッシュ */
   .flash-frame {
     position: absolute;
     top: 50%;
@@ -91,7 +86,6 @@
     100% { opacity: 0; }
   }
 
-  /* ▼ 大当たり時の「ピカッ → 消える」ループ光 */
   .win-glow {
     position: absolute;
     top: 50%;
@@ -104,26 +98,18 @@
   }
 
   @keyframes winGlowFlash {
-    /* 白 */
     0%   { opacity: 0; filter: drop-shadow(0 0 25px rgba(255,255,255,0.8)); }
     3%   { opacity: 1; }
     15%  { opacity: 0; }
-
-    /* マゼンタ */
     25%  { opacity: 0; filter: drop-shadow(0 0 25px rgba(255,0,255,0.8)); }
     28%  { opacity: 1; }
     40%  { opacity: 0; }
-
-    /* 金 */
     50%  { opacity: 0; filter: drop-shadow(0 0 25px rgba(255,215,0,0.8)); }
     53%  { opacity: 1; }
     65%  { opacity: 0; }
-
-    /* マゼンタ（2回目） */
     75%  { opacity: 0; filter: drop-shadow(0 0 25px rgba(255,0,255,0.8)); }
     78%  { opacity: 1; }
     90%  { opacity: 0; }
-
     100% { opacity: 0; }
   }
 
@@ -137,7 +123,6 @@
     transform: translate(-50%, -50%);
   }
 
-  /* ▼ コメント位置（START ボタンの半分だけ上へ） */
   #resultText {
     font-size: 40px;
     color: magenta;
@@ -145,7 +130,6 @@
     margin-top: 42px;
   }
 
-  /* ▼ START ボタン（ボタン高さぶん上へ） */
   #startBtn {
     padding: 10px 25px;
     font-size: 26px;
@@ -173,7 +157,6 @@
 <button id="startBtn">START</button>
 
 <script>
-/* 基本設定 */
 const REELS = 5;
 const oneHeight = 140;
 const totalHeight = 700;
@@ -201,13 +184,11 @@ const resultText = document.getElementById("resultText");
 const symbols = ["e", "l", "l", "e", "b"];
 const correctPattern = ["b","e","l","l","e"];
 
-/* 背景位置を中央揃えで更新 */
 function updateReelPosition(i) {
   reels[i].reelDiv.style.backgroundPositionY =
     (-positions[i] + centerOffset) + "px";
 }
 
-/* ボタン状態切り替え */
 function enableButton(i) {
   const btn = reels[i].stopBtn;
   btn.classList.remove("disabled");
@@ -220,7 +201,6 @@ function disableButton(i) {
   btn.src = "btn_unenabled.png";
 }
 
-/* 窓枠を白フラッシュ */
 function flashFrame() {
   const img = document.createElement("img");
   img.src = "slt_waku_1560x450.png";
@@ -229,7 +209,6 @@ function flashFrame() {
   setTimeout(() => img.remove(), 400);
 }
 
-/* 大当たりループ光（ピカッ → 消える） */
 function startWinGlow() {
   winGlowImg = document.createElement("img");
   winGlowImg.src = "slt_waku_1560x450.png";
@@ -244,7 +223,6 @@ function stopWinGlow() {
   }
 }
 
-/* belle の成立可能性チェック */
 function canStillBecomeBelle(lastIndex) {
   for (let i = 0; i <= lastIndex; i++) {
     const sym = symbols[Math.floor(positions[i] / oneHeight)];
@@ -253,7 +231,6 @@ function canStillBecomeBelle(lastIndex) {
   return true;
 }
 
-/* リール生成 */
 for (let i = 0; i < REELS; i++) {
   const reelDiv = document.createElement("div");
   reelDiv.className = "reel";
@@ -282,14 +259,12 @@ for (let i = 0; i < REELS; i++) {
   updateReelPosition(i);
 }
 
-/* 窓枠画像をスロット全体の幅に合わせる */
 function resizeFrame() {
   slotFrame.style.width = slotWrapper.offsetWidth + "px";
 }
 resizeFrame();
 window.addEventListener("resize", resizeFrame);
 
-/* START */
 function startGame() {
   stopWinGlow();
 
@@ -321,7 +296,6 @@ function startGame() {
 
 startBtn.onclick = startGame;
 
-/* 加速 */
 function accelerate(index) {
   const startTime = performance.now();
 
@@ -346,7 +320,6 @@ function accelerate(index) {
   requestAnimationFrame(step);
 }
 
-/* 回転ループ */
 function spinLoop(index) {
   if (!spinning[index] || stopped[index]) return;
 
@@ -356,7 +329,6 @@ function spinLoop(index) {
   requestAnimationFrame(() => spinLoop(index));
 }
 
-/* 停止（ラグなし・条件付きフラッシュ） */
 function stopReel(index) {
   if (stopped[index]) return;
 
@@ -378,7 +350,6 @@ function stopReel(index) {
   if (index + 1 < REELS) enableButton(index + 1);
 }
 
-/* 揃い判定 */
 function checkAllStopped() {
   if (!stopped.every(v => v)) return;
 
