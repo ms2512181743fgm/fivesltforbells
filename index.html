@@ -32,10 +32,10 @@
     color: magenta;
   }
 
-  /* ▼ 5列リール＋窓枠をまとめるラッパー */
+  /* ▼ 5列リール＋窓枠まとめ */
   .slot-wrapper {
     position: relative;
-    width: 780px; /* 140px × 5列 + 20px × 4隙間 = 780px */
+    width: fit-content; /* ← 実際の幅を JS で取得するため */
     margin: 0 auto;
   }
 
@@ -59,15 +59,14 @@
     background-position-y: 0;
   }
 
-  /* ▼ 新しい窓枠画像（5列まとめて） */
+  /* ▼ 窓枠画像（サイズは JS で自動調整） */
   .slot-frame {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    pointer-events: none; /* ボタン操作を邪魔しない */
-    width: 780px;  /* リール幅に合わせて縮小 */
-    height: 225px; /* 450px → 半分に縮小 */
+    pointer-events: none;
+    height: auto;
   }
 
   .stop-btn {
@@ -114,12 +113,12 @@
 <h1>Let’s Match b/e/l/l/e!</h1>
 
 <!-- ▼ リール5列＋窓枠まとめ -->
-<div class="slot-wrapper">
+<div class="slot-wrapper" id="slotWrapper">
 
   <div class="reels" id="reels"></div>
 
-  <!-- ▼ 追加した窓枠画像 -->
-  <img class="slot-frame" src="slt_waku_1560x450.png">
+  <!-- ▼ 追加した窓枠画像（サイズは JS で調整） -->
+  <img class="slot-frame" id="slotFrame" src="slt_waku_1560x450.png">
 
 </div>
 
@@ -131,38 +130,29 @@
 <script>
 /* 基本設定 */
 const REELS = 5;
-const oneHeight = 140;      // PNGの1コマ高さ
-const totalHeight = 700;    // 140 × 5
-const frameHeight = 210;    // 枠の高さ（1.5倍）
-const centerOffset = (frameHeight - oneHeight) / 2; // 35px → 中央揃え補正
+const oneHeight = 140;
+const totalHeight = 700;
+const frameHeight = 210;
+const centerOffset = (frameHeight - oneHeight) / 2;
 
-const baseMaxSpeed = 14.4;  // トップスピード1.2倍
+const baseMaxSpeed = 14.4;
 let fixedMaxSpeed = baseMaxSpeed;
 const accelDuration = 2000;
 
-/* 状態管理 */
 let reels = [];
 let speeds = Array(REELS).fill(0);
 
-/* belle が中央に来るように調整（140px単位） */
-let positions = [
-  560, // b
-  420, // e
-  280, // l
-  140, // l
-  0    // e
-];
-
+let positions = [560, 420, 280, 140, 0];
 let spinning = Array(REELS).fill(false);
 let stopped = Array(REELS).fill(false);
 
-/* DOM */
 const reelsContainer = document.getElementById("reels");
+const slotWrapper = document.getElementById("slotWrapper");
+const slotFrame = document.getElementById("slotFrame");
 const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
 const resultText = document.getElementById("resultText");
 
-/* 揃いパターン辞書 */
 const messages = {
   "belle": { text: "大当たり！", excellent: true },
   "beeee": { text: "べーーー", excellent: false },
@@ -173,16 +163,15 @@ const messages = {
   "elleb": { text: "右からやって来たね！", excellent: true }
 };
 
-/* PNG画像の下→上の順番 */
 const symbols = ["e", "l", "l", "e", "b"];
 
-/* 背景位置を中央揃えで更新する関数 */
+/* ▼ 背景位置を中央揃えで更新 */
 function updateReelPosition(i) {
   reels[i].reelDiv.style.backgroundPositionY =
     (-positions[i] + centerOffset) + "px";
 }
 
-/* リール生成 */
+/* ▼ リール生成 */
 for (let i = 0; i < REELS; i++) {
   const reelDiv = document.createElement("div");
   reelDiv.className = "reel";
@@ -205,12 +194,15 @@ for (let i = 0; i < REELS; i++) {
   updateReelPosition(i);
 }
 
-/* イージング */
-function easeOutExpo(t) {
-  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+/* ▼ 窓枠画像をスロット全体の幅に合わせる */
+function resizeFrame() {
+  const width = slotWrapper.offsetWidth;
+  slotFrame.style.width = width + "px";
 }
+resizeFrame();
+window.addEventListener("resize", resizeFrame);
 
-/* START */
+/* ▼ START */
 function startGame() {
   for (let i = 0; i < REELS; i++) {
     spinning[i] = false;
@@ -242,7 +234,7 @@ function startGame() {
 startBtn.onclick = startGame;
 startBtn.ontouchstart = (e) => { e.preventDefault(); startGame(); };
 
-/* 加速 */
+/* ▼ 加速 */
 function accelerate(index) {
   const startTime = performance.now();
 
@@ -268,7 +260,7 @@ function accelerate(index) {
   requestAnimationFrame(step);
 }
 
-/* 回転ループ */
+/* ▼ 回転ループ */
 function spinLoop(index) {
   if (!spinning[index] || stopped[index]) return;
 
@@ -279,7 +271,7 @@ function spinLoop(index) {
   requestAnimationFrame(() => spinLoop(index));
 }
 
-/* 停止 */
+/* ▼ 停止 */
 function stopReel(index) {
   if (stopped[index]) return;
 
@@ -311,7 +303,7 @@ function stopReel(index) {
   }
 }
 
-/* 揃い判定 */
+/* ▼ 揃い判定 */
 function checkAllStopped() {
   if (!stopped.every(v => v)) return;
 
@@ -328,6 +320,11 @@ function checkAllStopped() {
   }
 
   startBtn.style.display = "inline-block";
+}
+
+/* ▼ イージング */
+function easeOutExpo(t) {
+  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 </script>
 
