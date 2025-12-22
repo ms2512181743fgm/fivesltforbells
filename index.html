@@ -35,15 +35,18 @@
   /* ▼ 5列リール＋窓枠まとめ */
   .slot-wrapper {
     position: relative;
-    width: fit-content; /* ← 実際の幅を JS で取得するため */
+    width: fit-content; /* 実際の幅を JS で取得するため */
     margin: 0 auto;
   }
 
+  /* ▼ リール部分：高さを固定して、ここを基準に窓枠をセンタリング */
   .reels {
+    position: relative;
     display: flex;
     justify-content: center;
     gap: 20px;
     margin: 10px 0 20px;
+    height: 210px; /* ← リールの高さで固定（●ボタンの高さに影響されない） */
   }
 
   .reel {
@@ -59,10 +62,10 @@
     background-position-y: 0;
   }
 
-  /* ▼ 窓枠画像（サイズは JS で自動調整） */
+  /* ▼ 窓枠画像（5列まとめて） */
   .slot-frame {
     position: absolute;
-    top: 50%;
+    top: 50%;              /* reels の高さ(210px)に対して中央 */
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
@@ -133,19 +136,21 @@ const REELS = 5;
 const oneHeight = 140;
 const totalHeight = 700;
 const frameHeight = 210;
-const centerOffset = (frameHeight - oneHeight) / 2;
+const centerOffset = (frameHeight - oneHeight) / 2; // 35px
 
 const baseMaxSpeed = 14.4;
 let fixedMaxSpeed = baseMaxSpeed;
 const accelDuration = 2000;
 
+/* 状態管理 */
 let reels = [];
 let speeds = Array(REELS).fill(0);
 
-let positions = [560, 420, 280, 140, 0];
+let positions = [560, 420, 280, 140, 0]; // 初期 belle
 let spinning = Array(REELS).fill(false);
 let stopped = Array(REELS).fill(false);
 
+/* DOM */
 const reelsContainer = document.getElementById("reels");
 const slotWrapper = document.getElementById("slotWrapper");
 const slotFrame = document.getElementById("slotFrame");
@@ -153,6 +158,7 @@ const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
 const resultText = document.getElementById("resultText");
 
+/* メッセージ辞書 */
 const messages = {
   "belle": { text: "大当たり！", excellent: true },
   "beeee": { text: "べーーー", excellent: false },
@@ -163,15 +169,16 @@ const messages = {
   "elleb": { text: "右からやって来たね！", excellent: true }
 };
 
+/* PNG画像の下→上の順番 */
 const symbols = ["e", "l", "l", "e", "b"];
 
-/* ▼ 背景位置を中央揃えで更新 */
+/* 背景位置を中央揃えで更新 */
 function updateReelPosition(i) {
   reels[i].reelDiv.style.backgroundPositionY =
     (-positions[i] + centerOffset) + "px";
 }
 
-/* ▼ リール生成 */
+/* リール生成 */
 for (let i = 0; i < REELS; i++) {
   const reelDiv = document.createElement("div");
   reelDiv.className = "reel";
@@ -194,7 +201,7 @@ for (let i = 0; i < REELS; i++) {
   updateReelPosition(i);
 }
 
-/* ▼ 窓枠画像をスロット全体の幅に合わせる */
+/* 窓枠画像をスロット全体の幅に合わせる */
 function resizeFrame() {
   const width = slotWrapper.offsetWidth;
   slotFrame.style.width = width + "px";
@@ -202,7 +209,7 @@ function resizeFrame() {
 resizeFrame();
 window.addEventListener("resize", resizeFrame);
 
-/* ▼ START */
+/* START */
 function startGame() {
   for (let i = 0; i < REELS; i++) {
     spinning[i] = false;
@@ -234,7 +241,7 @@ function startGame() {
 startBtn.onclick = startGame;
 startBtn.ontouchstart = (e) => { e.preventDefault(); startGame(); };
 
-/* ▼ 加速 */
+/* 加速 */
 function accelerate(index) {
   const startTime = performance.now();
 
@@ -260,7 +267,7 @@ function accelerate(index) {
   requestAnimationFrame(step);
 }
 
-/* ▼ 回転ループ */
+/* 回転ループ */
 function spinLoop(index) {
   if (!spinning[index] || stopped[index]) return;
 
@@ -271,7 +278,7 @@ function spinLoop(index) {
   requestAnimationFrame(() => spinLoop(index));
 }
 
-/* ▼ 停止 */
+/* 停止 */
 function stopReel(index) {
   if (stopped[index]) return;
 
@@ -303,7 +310,7 @@ function stopReel(index) {
   }
 }
 
-/* ▼ 揃い判定 */
+/* 揃い判定 */
 function checkAllStopped() {
   if (!stopped.every(v => v)) return;
 
@@ -322,7 +329,7 @@ function checkAllStopped() {
   startBtn.style.display = "inline-block";
 }
 
-/* ▼ イージング */
+/* イージング */
 function easeOutExpo(t) {
   return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
