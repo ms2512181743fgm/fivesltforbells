@@ -37,7 +37,7 @@
     justify-content: center;
     gap: 20px;
     height: 210px;
-    margin-bottom: 40px; /* ← コメントと重ならないように余白追加 */
+    margin-bottom: 40px; /* コメントと重ならないように余白 */
   }
 
   .reel {
@@ -51,12 +51,12 @@
     background-size: 140px 700px;
   }
 
-  /* ▼ 窓枠画像（5列まとめて） */
+  /* ▼ 窓枠画像（ズレ修正済み） */
   .slot-frame {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -52%); /* ← 微調整済み */
     pointer-events: none;
   }
 
@@ -79,7 +79,7 @@
     top: 50%;
     left: 50%;
     width: 780px;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -52%);
     opacity: 0;
     pointer-events: none;
     animation: flashFrame 0.35s ease-out forwards;
@@ -91,16 +91,15 @@
     100% { opacity: 0; }
   }
 
-  /* ▼ 大当たり時のループ光（色が変わる） */
+  /* ▼ 大当たり時のループ光（白→マゼンタ→金→マゼンタ） */
   .win-glow {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 780px;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -52%);
     pointer-events: none;
     opacity: 0.8;
-    filter: drop-shadow(0 0 25px rgba(255,255,255,0.7));
     animation: winGlow 3s linear infinite;
   }
 
@@ -122,13 +121,15 @@
     transform: translate(-50%, -50%);
   }
 
+  /* ▼ コメント位置をさらに下げる */
   #resultText {
     font-size: 40px;
     color: magenta;
     min-height: 50px;
-    margin-top: 10px;
+    margin-top: 40px; /* ← ここを増やした */
   }
 
+  /* ▼ START ボタンをさらに下げる */
   #startBtn {
     padding: 10px 25px;
     font-size: 26px;
@@ -137,7 +138,7 @@
     background: #fff;
     border-radius: 10px;
     cursor: pointer;
-    margin: 20px auto;
+    margin: 60px auto 20px; /* ← 上方向に60px余白を追加 */
   }
 </style>
 </head>
