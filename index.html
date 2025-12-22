@@ -152,8 +152,9 @@ const symbols = ["e", "l", "l", "e", "b"];
 
 /* 背景位置を中央揃えで更新する関数 */
 function updateReelPosition(i) {
+  // ★ 符号を修正： -positions + centerOffset
   reels[i].reelDiv.style.backgroundPositionY =
-    -(positions[i] + centerOffset) + "px";
+    (-positions[i] + centerOffset) + "px";
 }
 
 /* リール生成 */
@@ -175,7 +176,6 @@ for (let i = 0; i < REELS; i++) {
 
   reelsContainer.appendChild(wrapper);
 
-  /* ★ ここで reels に登録してから中央揃えを適用 */
   reels.push({ reelDiv, stopBtn });
   updateReelPosition(i);
 }
@@ -269,8 +269,9 @@ function stopReel(index) {
 
   let shake = 15;
   function shakeAnim() {
+    // ★ ここも符号を合わせる
     reels[index].reelDiv.style.backgroundPositionY =
-      -(positions[index] + centerOffset + shake) + "px";
+      (-positions[index] + centerOffset + shake) + "px";
     shake *= -0.4;
     if (Math.abs(shake) > 1) {
       requestAnimationFrame(shakeAnim);
