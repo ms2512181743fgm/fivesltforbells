@@ -103,8 +103,8 @@
 <button id="startBtn">START</button>
 
 <script>
+/* 基本設定 */
 const REELS = 5;
-
 const oneHeight = 140;      // PNGの1コマ高さ
 const totalHeight = 700;    // 140 × 5
 const frameHeight = 210;    // 枠の高さ（1.5倍）
@@ -114,6 +114,7 @@ const baseMaxSpeed = 14.4;  // トップスピード1.2倍
 let fixedMaxSpeed = baseMaxSpeed;
 const accelDuration = 2000;
 
+/* 状態管理 */
 let reels = [];
 let speeds = Array(REELS).fill(0);
 
@@ -129,6 +130,7 @@ let positions = [
 let spinning = Array(REELS).fill(false);
 let stopped = Array(REELS).fill(false);
 
+/* DOM */
 const reelsContainer = document.getElementById("reels");
 const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
@@ -150,13 +152,14 @@ const symbols = ["e", "l", "l", "e", "b"];
 
 /* 背景位置を中央揃えで更新する関数 */
 function updateReelPosition(i) {
-  reels[i].reelDiv.style.backgroundPositionY = -(positions[i] + centerOffset) + "px";
+  reels[i].reelDiv.style.backgroundPositionY =
+    -(positions[i] + centerOffset) + "px";
 }
 
+/* リール生成 */
 for (let i = 0; i < REELS; i++) {
   const reelDiv = document.createElement("div");
   reelDiv.className = "reel";
-  updateReelPosition(i);
 
   const stopBtn = document.createElement("div");
   stopBtn.className = "stop-btn";
@@ -171,13 +174,18 @@ for (let i = 0; i < REELS; i++) {
   wrapper.appendChild(stopBtn);
 
   reelsContainer.appendChild(wrapper);
+
+  /* ★ ここで reels に登録してから中央揃えを適用 */
   reels.push({ reelDiv, stopBtn });
+  updateReelPosition(i);
 }
 
+/* イージング */
 function easeOutExpo(t) {
   return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
 }
 
+/* START */
 function startGame() {
   for (let i = 0; i < REELS; i++) {
     spinning[i] = false;
@@ -209,6 +217,7 @@ function startGame() {
 startBtn.onclick = startGame;
 startBtn.ontouchstart = (e) => { e.preventDefault(); startGame(); };
 
+/* 加速 */
 function accelerate(index) {
   const startTime = performance.now();
 
@@ -234,6 +243,7 @@ function accelerate(index) {
   requestAnimationFrame(step);
 }
 
+/* 回転ループ */
 function spinLoop(index) {
   if (!spinning[index] || stopped[index]) return;
 
@@ -244,6 +254,7 @@ function spinLoop(index) {
   requestAnimationFrame(() => spinLoop(index));
 }
 
+/* 停止 */
 function stopReel(index) {
   if (stopped[index]) return;
 
@@ -275,6 +286,7 @@ function stopReel(index) {
   }
 }
 
+/* 揃い判定 */
 function checkAllStopped() {
   if (!stopped.every(v => v)) return;
 
