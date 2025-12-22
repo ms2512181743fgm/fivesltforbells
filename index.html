@@ -18,12 +18,9 @@
     text-align: center;
     background: #000;
     font-size: 24px;
-
-    /* iPad 横向きで上下バーに隠れないように */
     padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
     margin: 0;
     min-height: 100vh;
-
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -44,13 +41,13 @@
 
   .reel {
     width: 140px;
-    height: 140px;
+    height: 210px; /* ← 1.5倍の高さ */
     overflow: hidden;
     border: 4px solid #333;
     border-radius: 12px;
     background-image: url("slt265x1325.png");
     background-repeat: repeat-y;
-    background-size: 140px 700px;
+    background-size: 140px 1050px; /* 210px × 5 */
     background-position-y: 0;
   }
 
@@ -106,22 +103,22 @@
 
 <script>
 const REELS = 5;
-const oneHeight = 140;
-const totalHeight = 700;
-const baseMaxSpeed = 12;
+const oneHeight = 210;       // ← 1コマの高さを 210px に
+const totalHeight = 1050;    // ← 210 × 5
+const baseMaxSpeed = 14.4;   // ← トップスピード 1.2倍（12 × 1.2）
 let fixedMaxSpeed = baseMaxSpeed;
 const accelDuration = 2000;
 
 let reels = [];
 let speeds = Array(REELS).fill(0);
 
-// 画像の下→上の順に合わせて belle が並ぶように初期位置を調整
+// belle が中央に来るように 210px 単位で調整
 let positions = [
-  560,
-  420,
-  280,
-  140,
-  0
+  840, // b
+  630, // e
+  420, // l
+  210, // l
+  0    // e
 ];
 
 let spinning = Array(REELS).fill(false);
@@ -132,11 +129,7 @@ const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
 const resultText = document.getElementById("resultText");
 
-/**
- * 揃いパターンごとのメッセージ定義
- * text: 表示する文字
- * excellent: true なら EXCELLENT!! を表示
- */
+/* 揃いパターン辞書 */
 const messages = {
   "belle": { text: "大当たり！", excellent: true },
   "beeee": { text: "べーーー", excellent: false },
@@ -147,7 +140,7 @@ const messages = {
   "elleb": { text: "右からやって来たね！", excellent: true }
 };
 
-// 背景画像の下→上の順番に対応するシンボル
+// 画像の下→上の順番に対応
 const symbols = ["e", "l", "l", "e", "b"];
 
 for (let i = 0; i < REELS; i++) {
@@ -215,7 +208,6 @@ function accelerate(index) {
     const t = Math.min((now - startTime) / accelDuration, 1);
     speeds[index] = fixedMaxSpeed * easeOutExpo(t);
 
-    // 回転方向を逆にする（マイナス方向へ）
     positions[index] = (positions[index] - speeds[index] + totalHeight) % totalHeight;
 
     reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
@@ -235,7 +227,6 @@ function accelerate(index) {
 function spinLoop(index) {
   if (!spinning[index] || stopped[index]) return;
 
-  // 回転方向を逆にする
   positions[index] = (positions[index] - speeds[index] + totalHeight) % totalHeight;
 
   reels[index].reelDiv.style.backgroundPositionY = -positions[index] + "px";
@@ -250,7 +241,6 @@ function stopReel(index) {
   spinning[index] = false;
   reels[index].stopBtn.style.display = "none";
 
-  // 停止時の慣性も逆方向に（1.2 は好みに応じて調整）
   positions[index] = (positions[index] - speeds[index] * 1.2 + totalHeight) % totalHeight;
 
   const snapped = Math.round(positions[index] / oneHeight) * oneHeight;
