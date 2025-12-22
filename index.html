@@ -73,41 +73,49 @@
     opacity: 0.5;
   }
 
-  /* ▼ 光エフェクト（単発） */
-  .glow {
+  /* ▼ 揃った瞬間の白フラッシュ */
+  .flash-frame {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 140px;
-    height: 210px;
-    border-radius: 12px;
-    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    width: 780px;
+    transform: translate(-50%, -50%);
     opacity: 0;
-    animation: glowFlash 0.45s ease-out forwards;
+    animation: flashFrame 0.35s ease-out forwards;
+    pointer-events: none;
   }
 
-  @keyframes glowFlash {
+  @keyframes flashFrame {
     0%   { opacity: 0; }
     30%  { opacity: 1; }
     100% { opacity: 0; }
   }
 
-  /* ▼ 全揃いループ光 */
-  .glow-loop {
+  /* ▼ 周回光（揃った列だけ） */
+  .orbit {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 140px;
-    height: 210px;
-    border-radius: 12px;
+    top: -10px;
+    left: -10px;
+    width: 160px;
+    height: 230px;
     pointer-events: none;
-    animation: glowLoop 1.2s ease-in-out infinite;
+    animation: orbitRotate 1.2s linear infinite;
   }
 
-  @keyframes glowLoop {
-    0%   { opacity: 0.2; }
-    50%  { opacity: 1; }
-    100% { opacity: 0.2; }
+  .orbit-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    top: 0;
+    left: 73px;
+    box-shadow: 0 0 10px white;
+  }
+
+  @keyframes orbitRotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
   }
 
   #excellent {
@@ -176,29 +184,8 @@ const startBtn = document.getElementById("startBtn");
 const excellent = document.getElementById("excellent");
 const resultText = document.getElementById("resultText");
 
-const messages = {
-  "belle": { text: "大当たり！", excellent: true },
-  "beeee": { text: "べーーー", excellent: false },
-  "leeee": { text: "りーーー", excellent: false },
-  "bbbbb": { text: "bを揃えた、しかし何も起こらなかった...", excellent: false },
-  "eeeee": { text: "eを揃えた、しかし何も起こらなかった...", excellent: false },
-  "lllll": { text: "lを揃えた、しかし何も起こらなかった...", excellent: false },
-  "elleb": { text: "右からやって来たね！", excellent: true }
-};
-
 const symbols = ["e", "l", "l", "e", "b"];
-
-/* ▼ ランダムグラデーション生成 */
-function randomGradient() {
-  const angle = Math.floor(Math.random() * 360);
-  const stop1 = Math.floor(Math.random() * 40) + 10;  // 10〜50%
-  const stop2 = stop1 + Math.floor(Math.random() * 40) + 20; // stop1+20〜stop1+60
-
-  return `linear-gradient(${angle}deg,
-    magenta ${stop1}%,
-    gold ${stop2}%
-  )`;
-}
+const correctPattern = ["b","e","l","l","e"];
 
 /* ▼ 背景位置を中央揃えで更新 */
 function updateReelPosition(i) {
@@ -219,18 +206,30 @@ function disableButton(i) {
   btn.src = "btn_unenabled.png";
 }
 
-/* ▼ 光演出（単発） */
-function flashIfCorrect(index) {
-  const symbol = symbols[Math.floor(positions[index] / oneHeight)];
-  const correct = ["b","e","l","l","e"][index];
+/* ▼ 揃った瞬間の白フラッシュ（窓枠画像で） */
+function flashFrame() {
+  const img = document.createElement("img");
+  img.src = "slt_waku_1560x450.png";
+  img.className = "flash-frame";
+  slotWrapper.appendChild(img);
+  setTimeout(() => img.remove(), 400);
+}
 
-  if (symbol === correct) {
-    const glow = document.createElement("div");
-    glow.className = "glow";
-    glow.style.background = randomGradient();
-    reels[index].reelDiv.parentElement.appendChild(glow);
-    setTimeout(() => glow.remove(), 500);
-  }
+/* ▼ 周回光を追加 */
+function addOrbit(index) {
+  const orbit = document.createElement("div");
+  orbit.className = "orbit";
+
+  const dot = document.createElement("div");
+  dot.className = "orbit-dot";
+
+  orbit.appendChild(dot);
+  reels[index].reelDiv.parentElement.appendChild(orbit);
+}
+
+/* ▼ 周回光を全削除 */
+function clearOrbit() {
+  document.querySelectorAll(".orbit").forEach(e => e.remove());
 }
 
 /* ▼ リール生成 */
@@ -242,9 +241,15 @@ for (let i = 0; i < REELS; i++) {
   stopBtn.className = "stop-btn disabled";
   stopBtn.src = "btn_unenabled.png";
 
-  stopBtn.onclick = () => {
+  /* iPhone のラグ対策：touchstart で即停止 */
+  stopBtn.addEventListener("touchstart", e => {
+    e.preventDefault();
     if (!stopBtn.classList.contains("disabled")) stopReel(i);
-  };
+  });
+
+  stopBtn.addEventListener("mousedown", () => {
+    if (!stopBtn.classList.contains("disabled")) stopReel(i);
+  });
 
   const wrapper = document.createElement("div");
   wrapper.style.textAlign = "center";
@@ -266,7 +271,7 @@ window.addEventListener("resize", resizeFrame);
 
 /* ▼ START */
 function startGame() {
-  document.querySelectorAll(".glow-loop").forEach(e => e.remove());
+  clearOrbit();
 
   for (let i = 0; i < REELS; i++) {
     disableButton(i);
@@ -342,22 +347,16 @@ function stopReel(index) {
 
   updateReelPosition(index);
 
-  let shake = 15;
-  function shakeAnim() {
-    reels[index].reelDiv.style.backgroundPositionY =
-      (-positions[index] + centerOffset + shake) + "px";
+  /* 揃った瞬間の白フラッシュ */
+  flashFrame();
 
-    shake *= -0.4;
-
-    if (Math.abs(shake) > 1) {
-      requestAnimationFrame(shakeAnim);
-    } else {
-      updateReelPosition(index);
-      flashIfCorrect(index);
-      checkAllStopped();
-    }
+  /* 揃っていたら周回光を追加 */
+  const symbol = symbols[Math.floor(positions[index] / oneHeight)];
+  if (symbol === correctPattern[index]) {
+    addOrbit(index);
   }
-  shakeAnim();
+
+  checkAllStopped();
 
   if (index + 1 < REELS) enableButton(index + 1);
 }
@@ -369,18 +368,9 @@ function checkAllStopped() {
   const result = positions.map(p => symbols[Math.floor(p / oneHeight)]);
   const joined = result.join("");
 
-  if (messages[joined]) {
-    resultText.textContent = messages[joined].text;
-    excellent.style.display = messages[joined].excellent ? "block" : "none";
-
-    if (joined === "belle") {
-      for (let i = 0; i < REELS; i++) {
-        const loop = document.createElement("div");
-        loop.className = "glow-loop";
-        loop.style.background = randomGradient();
-        reels[i].reelDiv.parentElement.appendChild(loop);
-      }
-    }
+  if (joined === "belle") {
+    resultText.textContent = "大当たり！";
+    excellent.style.display = "block";
   } else {
     resultText.textContent = "残念.....";
     excellent.style.display = "none";
